@@ -16,7 +16,7 @@ if STRING_SESSION:
 else:
     app = Client("sukuna_radio_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-calls = pytgcalls(app)
+calls = PyTgCalls(app)
 current_chat = None
 
 @app.on_message(filters.command(["start", "help"]) & filters.private)
