@@ -5,7 +5,13 @@ from pyrogram.types import Message
 from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 from config import API_ID, API_HASH, BOT_TOKEN, STRING_SESSION, OWNER_ID, STREAM_URL
+from pyrogram import filters, enums
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.errors import UserNotParticipant, RPCError
 
+
+FORCE_CHANNEL = "Sukuna X Music"
+CHANNEL_LINK = "https://t.me/youcanplaymusicbyurchoice"
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("sukuna-x-music")
 
