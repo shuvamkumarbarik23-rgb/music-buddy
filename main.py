@@ -6,7 +6,7 @@ from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 from config import API_ID, API_HASH, BOT_TOKEN, STRING_SESSION, OWNER_ID, STREAM_URL
 from pyrogram import filters, enums
-from telethon import Button
+
 
 
 
@@ -72,51 +72,34 @@ async def stop_radio(_, message: Message):
         await message.reply_text("⏹️ Radio stopped.")
     except Exception as exc:
         await message.reply_text(f"No active stream found, or stop failed: `{type(exc).__name__}`")
-# ===== FORCE SUBSCRIBE CHANNEL SETTINGS =====
-
-
-
-
-async def is_channel_member(user_id):
-    try:
-        participant = await bot.get_permissions(
-            CHANNEL_USERNAME, user_id
-        )
-        return True
-    except Exception:
-        return False
-
-
-@app.on(events.NewMessage(pattern=r"^/start$"))
-async def force_subscribe(event):
-    if not event.is_private:
+@app.on_message(filters.command("channelpost") & filters.private)
+async def channel_post(_, message: Message):
+    # Only the configured owner can post
+    if message.from_user.id != OWNER_ID:
+        await message.reply_text("⛔ You are not authorized.")
         return
 
-    if await is_channel_member(event.sender_id):
-        await event.respond(
-            "Welcome! You can now use the bot."
-        )
-    else:
-        await event.respond(
-            "Please join our channel first, then send /start again.",
-            buttons=[
-                [Button.url("📢 Join Channel", CHANNEL_LINK)],
-                [Button.inline("✅ I've Joined", b"check_join")]
-            ]
-        )
+    text = message.text.split(maxsplit=1)
 
-
-@app.on(events.CallbackQuery(data=b"check_join"))
-async def check_join_callback(event):
-    if await is_channel_member(event.sender_id):
-        await event.answer("Membership verified!", alert=True)
-        await event.respond("✅ You can now use the bot.")
-    else:
-        await event.answer(
-            "You haven't joined the channel yet.",
-            alert=True
+    if len(text) < 2:
+        await message.reply_text(
+            "Usage:\n/channelpost Your message here"
         )
+        return
 
+    post_text = text[1]
+
+    try:
+        await app.send_message(
+            CHANNEL_USERNAME,
+            post_text
+        )
+        await message.reply_text("✅ Message posted to your channel!")
+    except Exception as exc:
+        log.exception("Channel post failed")
+        await message.reply_text(
+            f"❌ Could not post: {type(exc).__name__}: {exc}"
+        )
 
 async def main():
     await app.start()
