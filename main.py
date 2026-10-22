@@ -6,12 +6,10 @@ from pytgcalls import PyTgCalls
 from pytgcalls.types import MediaStream
 from config import API_ID, API_HASH, BOT_TOKEN, STRING_SESSION, OWNER_ID, STREAM_URL
 from pyrogram import filters, enums
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.errors import UserNotParticipant, RPCError
+from telethon import Button
 
 
-FORCE_CHANNEL = "Sukuna X Music"
-CHANNEL_LINK = "https://t.me/youcanplaymusicbyurchoice"
+
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("sukuna-x-music")
 
@@ -74,6 +72,51 @@ async def stop_radio(_, message: Message):
         await message.reply_text("⏹️ Radio stopped.")
     except Exception as exc:
         await message.reply_text(f"No active stream found, or stop failed: `{type(exc).__name__}`")
+# ===== FORCE SUBSCRIBE CHANNEL SETTINGS =====
+
+
+
+
+async def is_channel_member(user_id):
+    try:
+        participant = await bot.get_permissions(
+            CHANNEL_USERNAME, user_id
+        )
+        return True
+    except Exception:
+        return False
+
+
+@app.on(events.NewMessage(pattern=r"^/start$"))
+async def force_subscribe(event):
+    if not event.is_private:
+        return
+
+    if await is_channel_member(event.sender_id):
+        await event.respond(
+            "Welcome! You can now use the bot."
+        )
+    else:
+        await event.respond(
+            "Please join our channel first, then send /start again.",
+            buttons=[
+                [Button.url("📢 Join Channel", CHANNEL_LINK)],
+                [Button.inline("✅ I've Joined", b"check_join")]
+            ]
+        )
+
+
+@app.on(events.CallbackQuery(data=b"check_join"))
+async def check_join_callback(event):
+    if await is_channel_member(event.sender_id):
+        await event.answer("Membership verified!", alert=True)
+        await event.respond("✅ You can now use the bot.")
+    else:
+        await event.answer(
+            "You haven't joined the channel yet.",
+            alert=True
+        )
+
 
 async def main():
     await app.start()
